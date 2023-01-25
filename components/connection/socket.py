@@ -21,20 +21,14 @@ class MailClientSocket:
             raise ConnectionException()
             
         self.__send_helo()
-    
-    def __send(self, msg: str):
-        self.__docmd(msg)
-        return self.__get_reply()
 
     def send_cmd(self, msg: str) -> Tuple[int, str]:
-        if not self.__available:
-            return self.__send_helo()
-
-        return self.__send(msg)
+        self.__docmd(msg)
+        return self.__get_reply()
     
     def __send_helo(self) -> Tuple[int, str]:
         cmd = f'helo {self.__clienthost}'
-        code, _ = self.__send(cmd)
+        code, _ = self.send_cmd(cmd)
         
         if code == 250:
             self.__available = True
