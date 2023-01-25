@@ -17,22 +17,37 @@ class MailClientSocket:
         self.__available = False
 
         if not self.__check_conn():
-            self.__sock.close()
+            self._sock.close()
             raise ConnectionException()
             
         self.__send_helo()
+    
+    def __set_available(self, value: bool) -> None:
+        if value is True:
+            self.__available = True
+            print("[CONNECTION] O servidor @gmail.com está pronto para receber chamadas.")
+        
+        else:
+            print("[CONNECTION] Oops. O servidor @gmail.com não foi startado.")
 
-    def send_cmd(self, msg: str) -> Tuple[int, str]:
+    def __send(self, msg: str):
         self.__docmd(msg)
         return self.__get_reply()
+
+    def send_cmd(self, msg: str) -> Tuple[int, str]:
+        if not self.__available:
+            return self.__send_helo()
+
+        return self.__send(msg)
     
     def __send_helo(self) -> Tuple[int, str]:
         cmd = f'helo {self.__clienthost}'
-        code, _ = self.send_cmd(cmd)
+        code, _ = self.__send(cmd)
         
         if code == 250:
-            self.__available = True
-            print('[CONNECTION] Servidor @gmail.com disponível para chamadas. ')
+            return self.__set_available(True)
+
+        return self.__set_available(False)
     
     def __docmd(self, msg) -> None:
         msg = f'{msg}{self.CRLF}'.encode(self.ENCODING)
