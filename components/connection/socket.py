@@ -1,6 +1,6 @@
 import socket
 from ssl import SSLSocket, create_default_context
-from exceptions.exceptions import ConnectionException
+from exceptions.exceptions import ConnectionException, HeloException
 from typing import Tuple
 class MailClientSocket:
 
@@ -9,6 +9,7 @@ class MailClientSocket:
     ENCODING = 'ascii'
     MAX_BYTES = 8162
     CRLF = "\r\n"
+    MAX_TRY = 5
 
     def __init__(self) -> None:
         self.__sock = self.__set_sock()
@@ -22,21 +23,22 @@ class MailClientSocket:
         self.__available = False
         self.__send_helo()
     
-    def __set_available(self, is_available: bool) -> None:
-        if is_available:
-            self.__available = True
-            print("[CONNECTION] O servidor @gmail.com está pronto para receber chamadas.")
-        
-        else:
-            print("[CONNECTION] Oops. O servidor @gmail.com não foi startado.")
+    def __set_available(self) -> None:
+        self.__available = True
+        print("[CONNECTION] O servidor @gmail.com está pronto para receber chamadas.")
 
     def __send(self, msg: str):
         self.__docmd(msg)
         return self.__get_reply()
 
     def send_cmd(self, msg: str) -> Tuple[int, str]:
-        if not self.__available:
-            return self.__send_helo()
+        requests = 0 
+        while not self.__available:
+            self.__send_helo()
+            requests += 1
+
+            if requests >= self.MAX_TRY:
+                raise HeloException()
 
         return self.__send(msg)
     
@@ -45,9 +47,7 @@ class MailClientSocket:
         code, _ = self.__send(cmd)
         
         if code == 250:
-            return self.__set_available(True)
-
-        return self.__set_available(False)
+            self.__set_available()
     
     def __docmd(self, msg) -> None:
         msg = f'{msg}{self.CRLF}'.encode(self.ENCODING)
