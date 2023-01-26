@@ -13,17 +13,17 @@ class MailClientSocket:
     def __init__(self) -> None:
         self.__sock = self.__set_sock()
         self.__file = self.__sock.makefile('rb')
-        self.__clienthost = socket.gethostbyname(socket.gethostname()) 
-        self.__available = False
 
         if not self.__check_conn():
-            self._sock.close()
+            self.__sock.close()
             raise ConnectionException()
-            
+
+        self.__clienthost = socket.gethostbyname(socket.gethostname()) 
+        self.__available = False
         self.__send_helo()
     
-    def __set_available(self, value: bool) -> None:
-        if value is True:
+    def __set_available(self, is_available: bool) -> None:
+        if is_available:
             self.__available = True
             print("[CONNECTION] O servidor @gmail.com está pronto para receber chamadas.")
         
@@ -84,3 +84,7 @@ class MailClientSocket:
         ssl_sock = context.wrap_socket(sock, server_hostname = self.DOMAIN, do_handshake_on_connect = False)
 
         return ssl_sock
+
+    def close(self) -> None:
+        print("[CONNECTION] Fechando conexão...")
+        self.__sock.close()
