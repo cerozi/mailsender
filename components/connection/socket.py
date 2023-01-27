@@ -9,7 +9,8 @@ class MailClientSocket:
     ENCODING = 'ascii'
     MAX_BYTES = 8162
     CRLF = "\r\n"
-    MAX_TRY = 5
+    MAX_HELO_TRY = 5
+    HELO_CMD = 'helo %s'
 
     def __init__(self) -> None:
         self.__sock = self.__set_sock()
@@ -37,13 +38,13 @@ class MailClientSocket:
             self.__send_helo()
             requests += 1
 
-            if requests >= self.MAX_TRY:
+            if requests >= self.MAX_HELO_TRY:
                 raise HeloException()
 
         return self.__send(msg)
     
     def __send_helo(self) -> Tuple[int, str]:
-        cmd = f'helo {self.__clienthost}'
+        cmd = self.HELO_CMD % self.__clienthost
         code, _ = self.__send(cmd)
         
         if code == 250:

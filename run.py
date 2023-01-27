@@ -5,8 +5,8 @@ username = os.environ.get("MAIL_USERNAME")
 password = os.environ.get("MAIL_PASSWORD")
 
 recipient_addr = "mcerozi@gmail.com"
-message = "Testing"
+message = "Teste"
 
-with MailManager() as conn:
-    conn.auth(username, password)
-    conn.mail(recipient = recipient_addr, message = message)
+with MailManager() as mail_conn:
+    mail_conn.auth(username, password)
+    mail_conn.mail(recipient = recipient_addr, message = message)
