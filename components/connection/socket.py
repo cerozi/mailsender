@@ -15,13 +15,10 @@ class MailClientSocket:
     def __init__(self) -> None:
         self.__sock = self.__set_sock()
         self.__file = self.__sock.makefile('rb')
-
-        if not self.__check_conn():
-            self.__sock.close()
-            raise ConnectionException()
-
         self.__clienthost = socket.gethostbyname(socket.gethostname()) 
         self.__available = False
+        
+        self.__check_conn()
         self.__send_helo()
     
     def __set_available(self) -> None:
@@ -69,15 +66,16 @@ class MailClientSocket:
         bytes_msg = b"\n".join(msg)
         return (int(code), repr(bytes_msg))
         
-    def __check_conn(self) -> bool:
+    def __check_conn(self) -> SSLSocket:
         self.__sock.connect((self.DOMAIN, self.PORT))
         code, _ = self.__get_reply()
         
         if code != 220:
-            return False
+            self.__sock.close()
+            raise ConnectionException()
         
         print(f"[CONNECTION] conexão com o {self.DOMAIN} estabelecida!")
-        return True
+        return self.__sock
 
     def __set_sock(self) -> SSLSocket:
         context = create_default_context()
