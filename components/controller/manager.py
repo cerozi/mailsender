@@ -1,13 +1,10 @@
 from components.connection.socket import MailClientSocket
+from components.connection.comands import AUTH_CMD, FROM_CMD, RCPT_CMD, DATA_CMD
 from components.models.email import Email
 from email.base64mime import body_encode as encode_base64
 from exceptions.exceptions import SenderException, RecipientException, MailException, DataException
 from typing import Tuple
 
-AUTH_CMD = "AUTH PLAIN %s"
-FROM_CMD = "mail FROM:%s"
-RCPT_CMD = "rcpt TO:%s"
-DATA_CMD = "data"
 
 class MailManager:
 
@@ -65,14 +62,11 @@ class MailManager:
     def __set_username(self, username: str) -> None:
         self.__username = username
 
-    def __success_mail(self) -> None:
-        print("[EMAIL] E-mail enviado com sucesso! ")
-
     def __success_auth(self) -> None:
         print("[LOGIN] Usuário autenticado com sucesso. ")
 
     def __invalid_auth(self) -> None:
-        print("[LOGIN] Login inválido. ")
+        print("[LOGIN] Usuário não autenticado. ")
 
     def close(self) -> None:
         self.__sock.close()

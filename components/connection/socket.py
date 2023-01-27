@@ -2,6 +2,9 @@ import socket
 from ssl import SSLSocket, create_default_context
 from exceptions.exceptions import ConnectionException, HeloException
 from typing import Tuple
+from components.connection.comands import HELO_CMD
+
+
 class MailClientSocket:
 
     DOMAIN = 'smtp.gmail.com'
@@ -10,12 +13,10 @@ class MailClientSocket:
     MAX_BYTES = 8162
     CRLF = "\r\n"
     MAX_HELO_TRY = 5
-    HELO_CMD = 'helo %s'
 
     def __init__(self) -> None:
         self.__sock = self.__set_sock()
         self.__file = self.__sock.makefile('rb')
-        self.__clienthost = socket.gethostbyname(socket.gethostname()) 
         self.__available = False
         
         self.__check_conn()
@@ -41,7 +42,8 @@ class MailClientSocket:
         return self.__send(msg)
     
     def __send_helo(self) -> Tuple[int, str]:
-        cmd = self.HELO_CMD % self.__clienthost
+        _client = socket.gethostbyname(socket.gethostname()) 
+        cmd = HELO_CMD % _client
         code, _ = self.__send(cmd)
         
         if code == 250:
