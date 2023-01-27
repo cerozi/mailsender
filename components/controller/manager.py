@@ -39,23 +39,25 @@ class MailManager:
         msg = f"{message}{MailClientSocket.CRLF}."
         return self.__sock.send_cmd(msg)
 
-    def mail(self, email: Email) -> None:
-        if self.__username is None:
-            return self.__invalid_auth()
-
-        code, _ = self.__mailfrom(self.__username)
+    def __sendmail(self, sender: str, recipient: str, message: str) -> None:
+        code, _ = self.__mailfrom(sender)
         if code != 250:
             raise SenderException(self.__username)
 
-        recipient = getattr(email, 'recipient')
         code, _ = self.__mailrecipient(recipient)
         if code != 250:
             raise RecipientException(recipient)
 
-        message = getattr(email, 'message')
         code, _ = self.__maildata(message)
         if code != 250:
             raise MailException()
+
+    def mail(self, email: Email) -> None:
+        if self.__username is None:
+            return self.__invalid_auth()
+
+        for recipient in email.recipients:
+            self.__sendmail(sender = self.__username, recipient = recipient, message = email.message)
 
         return email.successfull_email()
 

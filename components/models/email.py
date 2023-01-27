@@ -1,7 +1,9 @@
+from typing import Iterable
+
 class Email:
 
-    def __init__(self, recipient_addr: str, message: str) -> None:
-        self.recipient = recipient_addr
+    def __init__(self, recipient_addr: str | Iterable[str], message: str) -> None:
+        self.recipients = self.assert_recipients(recipient_addr)
         self.message = message
         self.__sent = False
 
@@ -11,6 +13,12 @@ class Email:
 
     def was_sent(self) -> bool:
         return self.__sent
+
+    def assert_recipients(self, recipient_addr) -> None:
+        if isinstance(recipient_addr, (list, tuple)):
+            return recipient_addr
+
+        return (recipient_addr, )
 
     def __set_sent(self) -> None:
         self.__sent = True
