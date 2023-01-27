@@ -1,4 +1,5 @@
 from components.connection.socket import MailClientSocket
+from components.models.email import Email
 from email.base64mime import body_encode as encode_base64
 from exceptions.exceptions import SenderException, RecipientException, MailException, DataException
 from typing import Tuple
@@ -41,7 +42,7 @@ class MailManager:
         msg = f"{message}{MailClientSocket.CRLF}."
         return self.__sock.send_cmd(msg)
 
-    def mail(self, recipient: str, message: str) -> None:
+    def mail(self, email: Email) -> None:
         if self.__username is None:
             return self.__invalid_auth()
 
@@ -49,15 +50,17 @@ class MailManager:
         if code != 250:
             raise SenderException(self.__username)
 
+        recipient = getattr(email, 'recipient')
         code, _ = self.__mailrecipient(recipient)
         if code != 250:
             raise RecipientException(recipient)
 
+        message = getattr(email, 'message')
         code, _ = self.__maildata(message)
         if code != 250:
             raise MailException()
 
-        return self.__success_mail()
+        return email.successfull_email()
 
     def __set_username(self, username: str) -> None:
         self.__username = username
