@@ -1,27 +1,32 @@
-from typing import Iterable
+from typing import Iterable, Type, Union
 
 class Email:
 
-    def __init__(self, recipient_addr: str | Iterable[str], message: str) -> None:
-        self.recipients = self.assert_recipients(recipient_addr)
+    def __init__(self, recipients_addr: Iterable[str], message: str) -> None:
+        self.recipients = recipients_addr
         self.message = message
         self.__sent = False
+        self.__errors = None
 
-    def successfull_email(self) -> None:
-        self.__set_sent()
-        return self.__success_message()
+    def set_sent(self) -> None:
+        self.__sent = True
+
+    def set_errors(self, exception: Type[Exception]) -> None:
+        self.__errors = exception.__repr__()
+
+    @property
+    def errors(self) -> Union[str, None]:
+        return self.__errors
+
+    def get_info(self) -> str:
+        return (
+            self.__repr__(),
+            self.__sent,
+            self.__errors
+        )
 
     def was_sent(self) -> bool:
         return self.__sent
 
-    def assert_recipients(self, recipient_addr) -> None:
-        if isinstance(recipient_addr, (list, tuple)):
-            return recipient_addr
-
-        return (recipient_addr, )
-
-    def __set_sent(self) -> None:
-        self.__sent = True
-
-    def __success_message(self) -> None:
-        print("[EMAIL] E-mail enviado com sucesso! ")
+    def __repr__(self) -> str:
+        return f'(to: {self.recipients}, msg: {self.message})'
