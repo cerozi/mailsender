@@ -1,5 +1,5 @@
-from components.controller.manager import MailConnection
-from components.models.email import Email
+from components.connection.conn import MailConnection
+from components.mail.models import Email
 import os
 
 username = os.environ.get("MAIL_USERNAME")
