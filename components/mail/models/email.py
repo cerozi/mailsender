@@ -1,18 +1,20 @@
-from typing import Iterable, Type, Union
+from typing import Type, Union
 
 class Email:
 
-    def __init__(self, recipients_addr: Iterable[str], message: str) -> None:
-        self.recipients = recipients_addr
+    def __init__(self, recipient: str, message: str) -> None:
+        self.recipient = recipient
         self.message = message
         self.__sent = False
         self.__errors = None
 
     def set_sent(self) -> None:
         self.__sent = True
+        return self.was_sent()
 
-    def set_errors(self, exception: Type[Exception]) -> None:
+    def set_error(self, exception: Type[Exception]) -> None:
         self.__errors = exception.__repr__()
+        return self.was_sent()
 
     @property
     def errors(self) -> Union[str, None]:
@@ -29,4 +31,4 @@ class Email:
         return self.__sent
 
     def __repr__(self) -> str:
-        return f'(to: {self.recipients}, msg: {self.message})'
+        return f'(to: {self.recipient}, msg: {self.message})'

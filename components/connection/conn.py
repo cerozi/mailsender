@@ -1,9 +1,10 @@
 from components.connection.socket import MailClientSocket
 from components.connection.comands import AUTH_CMD, FROM_CMD, RCPT_CMD, DATA_CMD
-from components.mail.models import Email
+from components.mail.models.email import Email
+from components.mail.controller.manager import MailManager
 from email.base64mime import body_encode as encode_base64
 from exceptions.exceptions import SenderException, RecipientException, MailException, DataException
-from typing import Tuple
+from typing import Tuple, Type
 
 
 class MailConnection:
@@ -39,27 +40,29 @@ class MailConnection:
         msg = f"{message}{MailClientSocket.CRLF}."
         return self.__sock.send_cmd(msg)
 
-    def __sendmail(self, sender: str, recipient: str, message: str) -> None:
-        code, _ = self.__mailfrom(sender)
+    def __sendmail(self, email: Type[Email]) -> None:
+        code, _ = self.__mailfrom(self.__username)
         if code != 250:
-            raise SenderException(self.__username)
+            return email.set_error(SenderException(self.__username))
 
-        code, _ = self.__mailrecipient(recipient)
+        code, _ = self.__mailrecipient(email.recipient)
         if code != 250:
-            raise RecipientException(recipient)
+            return email.set_error(RecipientException(email.recipient))
 
-        code, _ = self.__maildata(message)
+        code, _ = self.__maildata(email.message)
         if code != 250:
-            raise MailException()
+            return email.set_error(MailException())
 
-    def mail(self, email: Email) -> None:
+        return email.set_sent()
+
+    def mail(self, mail_manager: Type[MailManager]) -> None:
         if not self.__authenticated:
             return self.__invalid_auth()
 
-        for recipient in email.recipients:
-            self.__sendmail(sender = self.__username, recipient = recipient, message = email.message)
+        for email in mail_manager.get_emails():
+            self.__sendmail(email)
 
-        return email.successfull_email()
+        return mail_manager.result()
 
     def __set_authenticated(self, username: str) -> None:
         self.__authenticated = True
