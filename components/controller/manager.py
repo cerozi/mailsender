@@ -6,11 +6,11 @@ from exceptions.exceptions import SenderException, RecipientException, MailExcep
 from typing import Tuple
 
 
-class MailManager:
+class MailConnection:
 
     def __init__(self) -> None:
         self.__sock = MailClientSocket()
-        self.__username = None
+        self.__authenticated = False
 
     def auth(self, username: str, password: str) -> None:
         credentials = "\0%s\0%s" % (username, password)
@@ -18,7 +18,7 @@ class MailManager:
         code, _ = self.__sock.send_cmd(AUTH_CMD % encrypt)
 
         if code == 235:
-            self.__set_username(username)
+            self.__set_authenticated(username)
             return self.__success_auth()
 
         return self.__invalid_auth()
@@ -53,7 +53,7 @@ class MailManager:
             raise MailException()
 
     def mail(self, email: Email) -> None:
-        if self.__username is None:
+        if not self.__authenticated:
             return self.__invalid_auth()
 
         for recipient in email.recipients:
@@ -61,7 +61,8 @@ class MailManager:
 
         return email.successfull_email()
 
-    def __set_username(self, username: str) -> None:
+    def __set_authenticated(self, username: str) -> None:
+        self.__authenticated = True
         self.__username = username
 
     def __success_auth(self) -> None:

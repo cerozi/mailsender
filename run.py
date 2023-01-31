@@ -1,11 +1,11 @@
-from components.controller.manager import MailManager
+from components.controller.manager import MailConnection
 from components.models.email import Email
 import os
 
 username = os.environ.get("MAIL_USERNAME")
 password = os.environ.get("MAIL_PASSWORD")
 
-with MailManager() as mail_conn:
+with MailConnection() as mail_conn:
     mail_conn.auth(username, password)
 
     mail = Email(recipient_addr = ["mcerozi@gmail.com", "matheus.cerozi@jobconvo.com"], message = "Teste com multiplos recipientes. ")
