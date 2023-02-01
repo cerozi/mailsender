@@ -34,3 +34,6 @@ class MailManager:
 
     def is_successfull(self) -> bool:
         return all(tuple([email.was_sent() for email in self.__emails]))
+
+    def clean_emails(self) -> None:
+        self.__emails = list()
