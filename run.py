@@ -1,18 +1,22 @@
-from components.connection.conn import MailConnection
-from components.mail.controller.manager import MailManager
+from components.mail.controller.manager import AsyncMail
+from concurrent.futures import ALL_COMPLETED, wait
 import os
+import time
 
 username = os.environ.get("MAIL_USERNAME")
 password = os.environ.get("MAIL_PASSWORD")
 
-manager = MailManager()
+asyncmail = AsyncMail()
+asyncmail.validate_credentials(username, password)
 
-with MailConnection() as mail_conn:
-    mail_conn.auth(username, password)
+def main() -> None:
+    futures = asyncmail.send_mail(recipients_addr = ['mcerozi@gmail.com'] * 10, message = "async teste")
+    wait(futures, return_when = ALL_COMPLETED)
 
-    manager.create_email(
-        recipients_addr = ['matheus.cerozi@jobconvo.com', ], 
-        message = "Teste usando manager"
-    )
 
-    mail_conn.mail(manager)
+if __name__ == '__main__':
+    start = time.perf_counter()
+    main()
+    finish = time.perf_counter()
+
+    print(f"Finished in {round(finish - start, 2)} seconds...")

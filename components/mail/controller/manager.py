@@ -1,39 +1,51 @@
 from components.mail.models.email import Email
-from typing import Iterable, Type, Tuple
+from components.connection.conn import MailConnection
+from components.mail.controller.authentication import Authentication
+from concurrent.futures import ThreadPoolExecutor
+from typing import Iterable, Type
+from queue import Queue
+import time
 
-class MailManager:
+
+class AsyncMail:
 
     def __init__(self) -> None:
-        self.__emails = list()
+        self.__pool = ThreadPoolExecutor()
+        self.__emails = Queue()
+        self.__auth = Authentication()
 
-    def create_email(self, recipients_addr: str | Iterable[str], message: str) -> Type[Email]:
+    def validate_credentials(self, username: str, password: str):
 
-        new_mails = list()
+        with MailConnection() as conn:
 
-        if not isinstance(recipients_addr, (list, tuple)):
-            recipients_addr = (recipients_addr, )
+            if conn.auth(username, password):
+                self.__auth.set_credentials(username, password)
+                return self.__auth.authenticated_message()
+
+        self.__auth.set_authenticated(False)
+        return self.__auth.not_authenticated_message()
+
+    def __asyncsend(self, email: Type[Email]) -> None:
+
+        with MailConnection() as conn:
+
+            conn.auth(*self.__auth.get_credentials())
+            return conn.mail(email)
+
+    def send_mail(self, recipients_addr: Iterable[str], message: str):
+        
+        if not self.__auth.is_authenticated():
+            return self.__auth.not_authenticated_message()
 
         for recipient in recipients_addr:
             email = Email(recipient, message)
-            new_mails.append(email)
+            self.__emails.put(email)
 
-        self.__emails.extend(new_mails)
-        return new_mails
-    
-    def get_emails(self) -> Tuple[Email]:
-        return tuple([email for email in self.__emails if not email.was_sent()])
+        future_list = list()
+        while not self.__emails.empty():
+            future_list.append(self.__pool.submit(self.__asyncsend, self.__emails.get()))
 
-    def result(self) -> Tuple[Tuple[str, bool, str]]:
-        return tuple([email.get_info() for email in self.__emails])
+        return future_list
 
-    def sent(self) -> Tuple[str]:
-        return tuple([email.__repr__() for email in self.__emails if email.was_sent()])
 
-    def not_sent(self) -> Tuple[Tuple[str, str]]:
-        return tuple([tuple([email.__repr__(), email.errors]) for email in self.__emails if not email.was_sent()])
-
-    def is_successfull(self) -> bool:
-        return all(tuple([email.was_sent() for email in self.__emails]))
-
-    def clean_emails(self) -> None:
-        self.__emails = list()
+        

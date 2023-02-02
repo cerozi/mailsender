@@ -101,4 +101,4 @@ class MailClientSocket:
 
     def close(self) -> None:
         print("[CONNECTION] Fechando conexão...")
-        self.__sock.close()
+        return self.__sock.close()
