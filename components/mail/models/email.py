@@ -1,4 +1,4 @@
-from typing import Type, Union
+from typing import Type, Tuple
 
 class Email:
 
@@ -8,19 +8,19 @@ class Email:
         self.__sent = False
         self.__errors = None
 
-    def set_sent(self) -> None:
+    def set_sent(self) -> Tuple[str, bool, None | str]:
         self.__sent = True
-        return self.was_sent()
+        return self.get_info()
 
-    def set_error(self, exception: Type[Exception]) -> None:
+    def set_error(self, exception: Type[Exception]) -> Tuple[str, bool, None | str]:
         self.__errors = exception.__repr__()
-        return self.was_sent()
+        return self.get_info()
 
     @property
-    def errors(self) -> Union[str, None]:
+    def errors(self) -> str | None:
         return self.__errors
 
-    def get_info(self) -> str:
+    def get_info(self) -> Tuple[str, bool, None | str]:
         return (
             self.__repr__(),
             self.__sent,

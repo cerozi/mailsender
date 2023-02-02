@@ -11,7 +11,7 @@ with MailConnection() as mail_conn:
     mail_conn.auth(username, password)
 
     manager.create_email(
-        recipients_addr = ['matheus.cerozi@jobconvo.com', 'mcerozi@gmail.com'], 
+        recipients_addr = ['matheus.cerozi@jobconvo.com', ], 
         message = "Teste usando manager"
     )
 

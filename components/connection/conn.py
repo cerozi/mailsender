@@ -4,7 +4,7 @@ from components.mail.models.email import Email
 from components.mail.controller.manager import MailManager
 from email.base64mime import body_encode as encode_base64
 from exceptions.exceptions import SenderException, RecipientException, MailException, DataException
-from typing import Tuple, Type
+from typing import Tuple, Type, List
 
 
 class MailConnection:
@@ -40,7 +40,7 @@ class MailConnection:
         msg = f"{message}{MailClientSocket.CRLF}."
         return self.__sock.send_cmd(msg)
 
-    def __sendmail(self, email: Type[Email]) -> None:
+    def __sendmail(self, email: Type[Email]) -> bool:
         code, _ = self.__mailfrom(self.__username)
         if code != 250:
             return email.set_error(SenderException(self.__username))
@@ -55,14 +55,11 @@ class MailConnection:
 
         return email.set_sent()
 
-    def mail(self, mail_manager: Type[MailManager]) -> None:
+    def mail(self, mail_manager: Type[MailManager]) -> List[Tuple[str, bool, None | str]]:
         if not self.__authenticated:
             return self.__invalid_auth()
-
-        for email in mail_manager.get_emails():
-            self.__sendmail(email)
-
-        return mail_manager.result()
+        
+        return [self.__sendmail(email) for email in mail_manager.get_emails()]
 
     def __set_authenticated(self, username: str) -> None:
         self.__authenticated = True
@@ -77,7 +74,11 @@ class MailConnection:
     def close(self) -> None:
         self.__sock.close()
 
+    def connect(self) -> None:
+        self.__sock.start_conn()
+
     def __enter__(self):
+        self.connect()
         return self
 
     def __exit__(self, *args):
