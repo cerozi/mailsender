@@ -1,4 +1,4 @@
-from components.mail.models.credentials import Credentials
+from app.components.mail.auth.credentials import Credentials
 from typing import Tuple
 
 class Authentication:

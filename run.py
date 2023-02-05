@@ -1,4 +1,4 @@
-from components.mail.controller.manager import Mail
+from app.components.mail.controller.mailmanager import Mail
 from concurrent.futures import ALL_COMPLETED, wait
 import os
 import time

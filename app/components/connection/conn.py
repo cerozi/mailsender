@@ -1,8 +1,8 @@
-from components.connection.socket import MailClientSocket
-from components.connection.comands import AUTH_CMD, FROM_CMD, RCPT_CMD, DATA_CMD
-from components.mail.models.email import Email
+from app.components.connection.socket import MailClientSocket
+from app.components.connection.comands import AUTH_CMD, FROM_CMD, RCPT_CMD, DATA_CMD
+from app.components.mail.models.email import Email
 from email.base64mime import body_encode as encode_base64
-from exceptions.exceptions import SenderException, RecipientException, MailException, DataException
+from app.exceptions.exceptions import SenderException, RecipientException, MailException, DataException
 from typing import Tuple, Type, List
 
 

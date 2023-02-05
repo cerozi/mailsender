@@ -1,8 +1,8 @@
-from components.mail.models.email import Email
-from components.connection.conn import MailConnection
-from components.mail.controller.authentication import Authentication
+from app.components.mail.models.email import Email
+from app.components.connection.conn import MailConnection
+from app.components.mail.auth.authentication import Authentication
 from concurrent.futures import ThreadPoolExecutor, Future
-from exceptions.exceptions import UnauthenticatedException
+from app.exceptions.exceptions import UnauthenticatedException
 from typing import Iterable, Type, Tuple
 from queue import Queue
 from itertools import repeat

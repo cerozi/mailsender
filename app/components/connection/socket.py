@@ -1,7 +1,7 @@
 import socket
 from ssl import SSLSocket, create_default_context
-from exceptions.exceptions import ConnectionException, HeloException
-from components.connection.comands import HELO_CMD
+from app.exceptions.exceptions import ConnectionException, HeloException
+from app.components.connection.comands import HELO_CMD
 
 
 class MailClientSocket:
