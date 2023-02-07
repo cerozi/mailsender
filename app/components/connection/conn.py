@@ -110,7 +110,7 @@ class MailConnection:
 
         code, _ = self.__sock.send_cmd(DATA_CMD)
         if code != 354:
-            raise DataException()
+            return (code, _)
 
         msg = f"{message}{MailClientSocket.CRLF}."
         return self.__sock.send_cmd(msg)

@@ -5,10 +5,11 @@
 """
 
 
-from concurrent.futures import Future, ThreadPoolExecutor
+from concurrent.futures import Future, ThreadPoolExecutor, ALL_COMPLETED, wait
 from itertools import repeat
 from queue import Queue
 from typing import Iterable, Tuple, Type
+from time import sleep
 
 from app.components.connection.conn import MailConnection
 from app.components.mail.auth.authentication import Authentication
@@ -17,6 +18,7 @@ from app.exceptions.exceptions import UnauthenticatedException
 
 
 class Mail:
+
 
     def __init__(self) -> None:
 
@@ -29,7 +31,7 @@ class Mail:
         self.__emails = Queue()
         self.__auth = Authentication()
 
-    def validate_credentials(self, username: str, password: str) -> str:
+    def validate_credentials(self, username: str, password: str) -> bool:
 
         """
             Valida as credenciais do usuário que
@@ -50,11 +52,9 @@ class Mail:
         with MailConnection() as conn:
 
             if conn.auth(username, password):
-                self.__auth.set_credentials(username, password)
-                return self.__auth.authenticated_message()
+                return self.__auth.set_credentials(username, password)
 
-        self.__auth.set_authenticated(False)
-        return self.__auth.not_authenticated_message()
+        return self.__auth.set_authenticated(False)
 
     def __send(self, email: Type[Email]) -> Future:
 
@@ -82,8 +82,19 @@ class Mail:
         """
 
         futures = list()
+        chunks = list()
+        n = 0
+
         while not self.__emails.empty():
-            futures.append(self.__pool.submit(self.__send, self.__emails.get()))
+            email, n = self.__emails.get(), n + 1
+            chunks.append(self.__pool.submit(self.__send, email))
+
+            if (n % self.__pool._max_workers == 0):
+                print('...')
+                wait(chunks, return_when = ALL_COMPLETED, timeout = 180) and sleep(2.5)
+
+                futures.extend(chunks)
+                chunks = list()
 
         return tuple(futures)
 

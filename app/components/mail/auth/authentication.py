@@ -15,7 +15,7 @@ class Authentication:
 
         self.__authenticated = False
 
-    def set_credentials(self, username: str, password: str) -> Credentials:
+    def set_credentials(self, username: str, password: str) -> bool:
 
         """
             Quando a autenticação é válida, cria um
@@ -28,9 +28,9 @@ class Authentication:
         """
 
         self.__credentials = Credentials(username, password)
-        self.set_authenticated(True)
+        return self.set_authenticated(True)
 
-    def set_authenticated(self, b: bool) -> None:
+    def set_authenticated(self, b: bool) -> bool:
 
         """
             Seta o estado de autenticação
@@ -41,6 +41,7 @@ class Authentication:
         """
 
         self.__authenticated = b
+        return self.is_authenticated()
 
     def get_credentials(self) -> Tuple[str]:
 
@@ -63,9 +64,3 @@ class Authentication:
         """
 
         return self.__authenticated
-
-    def not_authenticated_message(self) -> None:
-        print("[LOGIN] usuário não autenticado. ")
-
-    def authenticated_message(self) -> None:
-        print("[LOGIN] usuário autenticado com sucesso! ")

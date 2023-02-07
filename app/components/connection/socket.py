@@ -34,7 +34,7 @@ class MailClientSocket:
         self.__connected = False
         self.__available = False
 
-    def __set_connected(self) -> None:
+    def __set_connected(self) -> str:
 
         """
             Sinaliza que o socket cliente está
@@ -42,9 +42,9 @@ class MailClientSocket:
         """
 
         self.__connected = True
-        print("Conexão estabelecida!")
+        return "Conexão estabelecida!"
 
-    def __set_available(self) -> None:
+    def __set_available(self) -> str:
 
         """
             Sinaliza que o servidor está
@@ -52,7 +52,7 @@ class MailClientSocket:
         """
 
         self.__available = True
-        print("O servidor está disponível para receber chamadas!")
+        return "O servidor está disponível para receber chamadas!"
 
     def __send(self, msg: str):
 
@@ -216,5 +216,4 @@ class MailClientSocket:
             Fecha a conexão entre os sockets.
         """
 
-        print("[CONNECTION] Fechando conexão...")
         return self.__sock.close()
