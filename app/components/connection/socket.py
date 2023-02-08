@@ -136,13 +136,19 @@ class MailClientSocket:
             code = bytes_line[:3]
             msg.append(bytes_line[4:].strip(b' \t\r\n'))
             
+            # tratamento de erro quando o código não é retornado
+            try:
+                code = int(code)
+            except ValueError:
+                code = -1
+
             # caso a resposta for multi-linhas
             if bytes_line[3:4] != '-':
                 break
                 
         # retorna a mensagem e o código referente à resposta do servidor
         bytes_msg = b"\n".join(msg)
-        return (int(code), repr(bytes_msg))
+        return (code, repr(bytes_msg))
 
     def start_conn(self) -> None:
 

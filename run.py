@@ -4,7 +4,6 @@ from typing import Type, Callable
 from time import perf_counter
 import os
 
-
 class MailTesting:
 
     RECIPIENT = ['omagomaguin@gmail.com']
@@ -43,9 +42,6 @@ class MailTesting:
 
         futures = mail.send_mail(self.RECIPIENT * self.N_TIMES, self.MESSAGE)
         wait(futures, return_when = ALL_COMPLETED)
-
-        for f in futures:
-            print(f.result())
 
     @timer
     def syncmail(self, mail: Type[Mail]) -> None:

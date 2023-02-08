@@ -26,7 +26,7 @@ class Email:
         self.__sent = False
         self.__errors = None
 
-    def set_sent(self) -> Tuple[str, bool, None | str]:
+    def set_sent(self) -> 'Email':
 
         """
             Seta o e-mail como enviado.
@@ -36,9 +36,9 @@ class Email:
         """
 
         self.__sent = True
-        return self.get_info()
+        return self
 
-    def set_error(self, exception: Type[Exception]) -> Tuple[str, bool, None | str]:
+    def set_error(self, exception: Type[Exception]) -> 'Email':
 
         """
             Sinaliza qual exceção que foi gerada
@@ -54,7 +54,7 @@ class Email:
         """
 
         self.__errors = exception.__repr__()
-        return self.get_info()
+        return self
 
     @property
     def errors(self) -> str | None:

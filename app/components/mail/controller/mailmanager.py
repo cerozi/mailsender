@@ -5,11 +5,12 @@
 """
 
 
-from concurrent.futures import Future, ThreadPoolExecutor, ALL_COMPLETED, wait
+from concurrent.futures import Future
 from itertools import repeat
 from queue import Queue
-from typing import Iterable, Tuple, Type
-from time import sleep
+from typing import Iterable, Tuple
+
+
 
 from app.components.connection.conn import MailConnection
 from app.components.mail.auth.authentication import Authentication
@@ -19,6 +20,7 @@ from app.exceptions.exceptions import UnauthenticatedException
 
 class Mail:
 
+    MAX_WORKERS = 2
 
     def __init__(self) -> None:
 
@@ -27,7 +29,7 @@ class Mail:
             assíncrona ou síncrona.
         """
 
-        self.__pool = ThreadPoolExecutor()
+        self.__pool = None
         self.__emails = Queue()
         self.__auth = Authentication()
 
@@ -45,8 +47,8 @@ class Mail:
                     >>> password: Senha da conta.
 
                 Returns:
-                    Mensagem sinalizando se o usuário
-                    foi autenticado ou não.
+                    Booleano indicando se o usuário foi
+                    autenticado.
         """
 
         with MailConnection() as conn:
@@ -56,49 +58,7 @@ class Mail:
 
         return self.__auth.set_authenticated(False)
 
-    def __send(self, email: Type[Email]) -> Future:
-
-        """
-            Loga o usuário e envia
-            o e-mail.
-
-                Args:
-                    >>> email: Instância da classe E-mail.
-        """
-
-        with MailConnection() as conn:
-
-            conn.auth(*self.__auth.get_credentials())
-            return conn.mail(email)
-
-    def __asyncsend(self) -> Tuple[Future]:
-
-        """
-            Envia múltiplos e-mails
-            de maneira assíncrona.
-
-                Returns:
-                    Tupla contendo objetos Future.
-        """
-
-        futures = list()
-        chunks = list()
-        n = 0
-
-        while not self.__emails.empty():
-            email, n = self.__emails.get(), n + 1
-            chunks.append(self.__pool.submit(self.__send, email))
-
-            if (n % self.__pool._max_workers == 0):
-                print('...')
-                wait(chunks, return_when = ALL_COMPLETED, timeout = 180) and sleep(2.5)
-
-                futures.extend(chunks)
-                chunks = list()
-
-        return tuple(futures)
-
-    def __syncsend(self) -> Tuple[Tuple[str, bool, str | None]]:
+    def __send(self) -> Tuple[Tuple[str, bool, str | None]]:
 
         """
             Envia múltiplos e-mails
@@ -109,11 +69,21 @@ class Mail:
                     de cada E-mail.
         """
 
-        result = list()
-        while not self.__emails.empty():
-            result.append(self.__send(self.__emails.get()))
+        sent_emails = list()
 
-        return tuple(result)
+        with MailConnection() as conn:
+
+            conn.auth(*self.__auth.get_credentials())
+            while not self.__emails.empty():
+                email = conn.mail(self.__emails.get())
+
+                if not email.was_sent():
+                    self.__emails.put(email)
+                    continue
+
+                sent_emails.append(email)
+
+        return tuple(sent_emails)
 
     def send_mail(self, recipients_addr: Iterable[str], message: str, asynch: bool = True) -> Tuple[Future] | Tuple[Tuple[str, bool, str | None]]:
 
@@ -136,11 +106,12 @@ class Mail:
         [self.__emails.put(email) for email in map(lambda args: Email(*args), zip(recipients_addr, repeat(message, len(recipients_addr))))]
 
         if asynch:
+
             # envia os e-mails de maneira assíncrona
-            return self.__asyncsend()
+            ...
 
         # envia os e-mails de maneira síncrona
-        return self.__syncsend()
+        return self.__send()
 
 
         
