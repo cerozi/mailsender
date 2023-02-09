@@ -9,11 +9,11 @@ from email.base64mime import body_encode as encode_base64
 
 from typing import Tuple, Type
 
-from app.components.connection.comands import (AUTH_CMD, DATA_CMD, FROM_CMD,
+from app.core.components.connection.comands import (AUTH_CMD, DATA_CMD, FROM_CMD,
                                                RCPT_CMD)
-from app.components.connection.socket import MailClientSocket
-from app.components.mail.models.email import Email
-from app.exceptions.exceptions import (DataException, MailException,
+from app.core.components.connection.socket import MailClientSocket
+from app.core.components.mail.models.email import Email
+from app.core.exceptions.exceptions import (DataException, MailException,
                                        RecipientException, SenderException)
 
 

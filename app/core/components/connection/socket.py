@@ -9,8 +9,8 @@ from ssl import SSLSocket, create_default_context
 
 from typing import Tuple
 
-from app.components.connection.comands import HELO_CMD
-from app.exceptions.exceptions import ConnectionException, HeloException
+from app.core.components.connection.comands import HELO_CMD
+from app.core.exceptions.exceptions import ConnectionException, HeloException
 
 
 class MailClientSocket:

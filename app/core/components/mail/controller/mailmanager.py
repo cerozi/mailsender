@@ -12,10 +12,10 @@ from typing import Iterable, Tuple
 
 
 
-from app.components.connection.conn import MailConnection
-from app.components.mail.auth.authentication import Authentication
-from app.components.mail.models.email import Email
-from app.exceptions.exceptions import UnauthenticatedException
+from app.core.components.connection.conn import MailConnection
+from app.core.components.mail.auth.authentication import Authentication
+from app.core.components.mail.models.email import Email
+from app.core.exceptions.exceptions import UnauthenticatedException
 
 
 class Mail:
