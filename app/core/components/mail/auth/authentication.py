@@ -28,7 +28,6 @@ class Authentication:
         """
 
         self.__credentials = Credentials(username, password)
-        return self.set_authenticated(True)
 
     def set_authenticated(self, b: bool) -> bool:
 

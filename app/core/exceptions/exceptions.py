@@ -96,6 +96,6 @@ class UnauthenticatedException(Exception):
 
     def __init__(self) -> None:
         message = """To call send_mail(), you need first call 
-                    validate_credentials() and make sure that
-                    you are authenticated. """
+        validate_credentials() and make sure that
+        you are authenticated. """
         super().__init__(message)

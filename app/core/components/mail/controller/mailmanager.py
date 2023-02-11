@@ -7,30 +7,28 @@
 
 from concurrent.futures import Future
 from itertools import repeat
-from queue import Queue
+import queue
 from typing import Iterable, Tuple
 
-
-
+from app.celery_config import celery
 from app.core.components.connection.conn import MailConnection
 from app.core.components.mail.auth.authentication import Authentication
 from app.core.components.mail.models.email import Email
 from app.core.exceptions.exceptions import UnauthenticatedException
 
 
-class Mail:
+class Mail(celery.Task):
 
-    MAX_WORKERS = 2
+    name = 'Mail'
 
     def __init__(self) -> None:
 
         """
             Envia múltiplos e-mails de maneira
-            assíncrona ou síncrona.
+            assíncrona e/ou síncrona.
         """
 
-        self.__pool = None
-        self.__emails = Queue()
+        self.__emails = list()
         self.__auth = Authentication()
 
     def validate_credentials(self, username: str, password: str) -> bool:
@@ -54,15 +52,17 @@ class Mail:
         with MailConnection() as conn:
 
             if conn.auth(username, password):
-                return self.__auth.set_credentials(username, password)
+                self.__auth.set_credentials(username, password)
+                return self.__auth.set_authenticated(True)
 
         return self.__auth.set_authenticated(False)
 
-    def __send(self) -> Tuple[Tuple[str, bool, str | None]]:
+    def __send(self, credentials: Tuple[str, str], emails: list) -> Tuple[Tuple[str, bool, str | None]]:
 
         """
-            Envia múltiplos e-mails
-            de maneira síncrona.
+            Abre conexão com o servidor do Gmail,
+            autentica o usuário e envia os e-mails
+            da Queue.
 
                 Returns:
                     Tupla contendo informações referentes ao envio
@@ -70,26 +70,33 @@ class Mail:
         """
 
         sent_emails = list()
+        
+        mailsqueue = queue.Queue()
+        mailsqueue.queue = queue.deque(emails)
 
         with MailConnection() as conn:
 
-            conn.auth(*self.__auth.get_credentials())
-            while not self.__emails.empty():
-                email = conn.mail(self.__emails.get())
-
-                if not email.was_sent():
-                    self.__emails.put(email)
-                    continue
-
+            conn.auth(*credentials)
+            while not mailsqueue.empty():
+                email = conn.mail(mailsqueue.get())
                 sent_emails.append(email)
 
-        return tuple(sent_emails)
+        return tuple([email.get_info() for email in sent_emails])
+
+
+    def run(self, credentials: Tuple[str, str], emails: list):
+        # TODO: adicionar Redis para verificar assinatura;
+        return self.__send(credentials, emails)
+
 
     def send_mail(self, recipients_addr: Iterable[str], message: str, asynch: bool = True) -> Tuple[Future] | Tuple[Tuple[str, bool, str | None]]:
 
         """
             Cria instâncias de Email e adiciona elas à
-            Queue contendo e-mails a serem enviados.
+            Queue contendo e-mails a serem enviados. Após
+            preencher a Queue, faz o envio do e-mail de
+            maneira assíncrona atráves de .delay() ou de
+            maneira síncrona atráves de .run().
 
                 Args:
                     >>> recipients_addr: Lista de destinatários.
@@ -103,15 +110,18 @@ class Mail:
             raise UnauthenticatedException()
 
         # cria instâncias da classe Email para cada recipiente da lista recipients_addr e adiciona estas à Queue
-        [self.__emails.put(email) for email in map(lambda args: Email(*args), zip(recipients_addr, repeat(message, len(recipients_addr))))]
+        [self.__emails.append(email) for email in map(lambda args: Email(*args), zip(recipients_addr, repeat(message, len(recipients_addr))))]
 
+        # envia os e-mails de maneira assíncrona
         if asynch:
-
-            # envia os e-mails de maneira assíncrona
-            ...
+            # TODO: Adicionar redis para gerar assinatura;
+            return self.apply_async(
+                args = (self.__auth.get_credentials(), self.__emails),
+                serializer = 'pickle'
+            )
 
         # envia os e-mails de maneira síncrona
-        return self.__send()
+        return self.run(self.__auth.get_credentials(), self.__emails)
 
 
-        
+celery.register_task(Mail())
