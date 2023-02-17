@@ -1,17 +1,15 @@
 from app.core.components.mail.controller.mailmanager import Mail
-from time import sleep
+from app.celery_config import set_addr
+from celery_config import BROKER_URL, CELERY_RESULT_BACKEND
 import os
 
-username = os.environ.get("MAIL_USERNAME")
-password = os.environ.get("MAIL_PASSWORD")
-
+set_addr(BROKER_URL, CELERY_RESULT_BACKEND)
 mail = Mail()
-assert mail.validate_credentials(username, password) is True
+
+assert mail.validate_credentials(
+    os.environ.get("MAIL_USERNAME"),
+    os.environ.get("MAIL_PASSWORD")
+) is True, ('Invalid credentials.')
 
 
-task = mail.send_mail(recipients_addr = ['omagomaguin@gmail.com'] * 5, message = "Celery async test.")
-print(type(task))
-
-while not task.ready():
-    sleep(1)
-    print("Task running...")
+mail.send_mail(recipients_addr = ['omagomaguin@gmail.com'] * 5, message = '...', asynch = 1)

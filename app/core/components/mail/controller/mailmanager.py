@@ -5,11 +5,12 @@
 """
 
 
-from concurrent.futures import Future
 from itertools import repeat
 import queue
 from typing import Iterable, Tuple
 
+from colorama import Fore
+from threading import Thread
 from app.celery_config import celery
 from app.core.components.connection.conn import MailConnection
 from app.core.components.mail.auth.authentication import Authentication
@@ -17,9 +18,7 @@ from app.core.components.mail.models.email import Email
 from app.core.exceptions.exceptions import UnauthenticatedException
 
 
-class Mail(celery.Task):
-
-    name = 'Mail'
+class Mail:
 
     def __init__(self) -> None:
 
@@ -28,7 +27,6 @@ class Mail(celery.Task):
             assíncrona e/ou síncrona.
         """
 
-        self.__emails = list()
         self.__auth = Authentication()
 
     def validate_credentials(self, username: str, password: str) -> bool:
@@ -57,7 +55,10 @@ class Mail(celery.Task):
 
         return self.__auth.set_authenticated(False)
 
-    def __send(self, credentials: Tuple[str, str], emails: list) -> Tuple[Tuple[str, bool, str | None]]:
+    
+    @staticmethod
+    @celery.task
+    def __send(credentials: Tuple[str, str], emails: list) -> Tuple[Tuple[str, bool, str | None]]:
 
         """
             Abre conexão com o servidor do Gmail,
@@ -83,45 +84,29 @@ class Mail(celery.Task):
 
         return tuple([email.get_info() for email in sent_emails])
 
+    def send_mail(self, recipients_addr: Iterable[str], message: str, asynch: int = 0) -> None:
 
-    def run(self, credentials: Tuple[str, str], emails: list):
-        # TODO: adicionar Redis para verificar assinatura;
-        return self.__send(credentials, emails)
-
-
-    def send_mail(self, recipients_addr: Iterable[str], message: str, asynch: bool = True) -> Tuple[Future] | Tuple[Tuple[str, bool, str | None]]:
-
-        """
-            Cria instâncias de Email e adiciona elas à
-            Queue contendo e-mails a serem enviados. Após
-            preencher a Queue, faz o envio do e-mail de
-            maneira assíncrona atráves de .delay() ou de
-            maneira síncrona atráves de .run().
-
-                Args:
-                    >>> recipients_addr: Lista de destinatários.
-                    >>> message: Corpo da mensagem do e-mail.
-                    >>> asynch: Se o envio dos e-mails deve
-                    ser assíncrono ou síncrono.
-        """
-        
-        # valida se o usuário está autenticado
         if not self.__auth.is_authenticated():
             raise UnauthenticatedException()
+        
+        if not asynch in range(0, 3):
+            raise ValueError("Asynch arg must be 1 (for celery) or 2 (for threading)! ")
 
-        # cria instâncias da classe Email para cada recipiente da lista recipients_addr e adiciona estas à Queue
-        [self.__emails.append(email) for email in map(lambda args: Email(*args), zip(recipients_addr, repeat(message, len(recipients_addr))))]
+        emails = tuple(map(lambda args: Email(*args), zip(recipients_addr, repeat(message, len(recipients_addr)))))
 
-        # envia os e-mails de maneira assíncrona
-        if asynch:
-            # TODO: Adicionar redis para gerar assinatura;
-            return self.apply_async(
-                args = (self.__auth.get_credentials(), self.__emails),
-                serializer = 'pickle'
+        if asynch == 1:
+
+            return self.__send.apply_async(
+                args = (self.__auth.get_credentials(), emails), serializer = 'pickle'
             )
 
-        # envia os e-mails de maneira síncrona
-        return self.run(self.__auth.get_credentials(), self.__emails)
+        if asynch == 2:
 
+            return Thread(
+                target = self.__send.run, daemon = False,
+                args = (self.__auth.get_credentials(), emails), 
+                ).start()
 
-celery.register_task(Mail())
+        return self.__send.run(
+            self.__auth.get_credentials(), emails
+        )
