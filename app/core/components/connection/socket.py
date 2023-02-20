@@ -10,7 +10,7 @@ from ssl import SSLSocket, create_default_context
 from typing import Tuple
 
 from app.core.components.connection.comands import HELO_CMD
-from app.core.exceptions.exceptions import ConnectionException, HeloException
+from app.core.exceptions.exceptions import ConnectionError, HeloError
 
 
 class MailClientSocket:
@@ -156,10 +156,10 @@ class MailClientSocket:
             Inicia a conexão com socket do smtp.gmail.com.
             
             Primeiro é estabelecida a conexão com o servidor; Caso essa conexão não tenha êxito, 
-            a exceção ConnectionException() é levantada. Em seguida, envia o comando HELO para 
+            a exceção ConnectionError() é levantada. Em seguida, envia o comando HELO para 
             que o servidor esteja ciente que novas requisições estão por vir. Caso esse comando 
             falhe, algumas novas tentativas são feitas e, se em nenhuma dessas houver sucesso, a 
-            exceção HeloException() é levantada.
+            exceção HeloError() é levantada.
         """
 
         if not self.__connected:
@@ -173,7 +173,7 @@ class MailClientSocket:
         """
             Envia o comando HELO para o servidor. Se este não aceitar,
             tenta fazer o envio mais algumas vezes. Caso não houver 
-            sucesso em nenhuma destas, a exceção HeloException() é
+            sucesso em nenhuma destas, a exceção HeloError() é
             levantada
         """
 
@@ -183,7 +183,7 @@ class MailClientSocket:
             requests += 1
 
             if requests >= self.MAX_HELO_TRY:
-                raise HeloException()
+                raise HeloError()
         
     def __conn(self) -> None:
 
@@ -199,7 +199,7 @@ class MailClientSocket:
         
         if code != 220:
             self.__sock.close()
-            raise ConnectionException()
+            raise ConnectionError()
         
         return self.__set_connected()
 

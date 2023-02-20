@@ -1,9 +1,9 @@
 from app.core.components.mail.controller.mailmanager import Mail
-from app.celery_config import set_addr
+from app.celery_config import celery
 from celery_config import BROKER_URL, CELERY_RESULT_BACKEND
 import os
 
-set_addr(BROKER_URL, CELERY_RESULT_BACKEND)
+celery.set_addr(BROKER_URL, CELERY_RESULT_BACKEND)
 mail = Mail()
 
 assert mail.validate_credentials(

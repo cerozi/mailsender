@@ -9,13 +9,12 @@ from itertools import repeat
 import queue
 from typing import Iterable, Tuple
 
-from colorama import Fore
 from threading import Thread
 from app.celery_config import celery
 from app.core.components.connection.conn import MailConnection
 from app.core.components.mail.auth.authentication import Authentication
 from app.core.components.mail.models.email import Email
-from app.core.exceptions.exceptions import UnauthenticatedException
+from app.core.exceptions.exceptions import UnauthenticatedError, CeleryAddressError
 
 
 class Mail:
@@ -84,21 +83,17 @@ class Mail:
 
         return tuple([email.get_info() for email in sent_emails])
 
-    def send_mail(self, recipients_addr: Iterable[str], message: str, asynch: int = 0) -> None:
-
-        if not self.__auth.is_authenticated():
-            raise UnauthenticatedException()
-        
-        if not asynch in range(0, 3):
-            raise ValueError("Asynch arg must be 1 (for celery) or 2 (for threading)! ")
-
-        emails = tuple(map(lambda args: Email(*args), zip(recipients_addr, repeat(message, len(recipients_addr)))))
+    def __evaluate_method(self, asynch: int, emails: Tuple[Email]):
 
         if asynch == 1:
 
+            if not celery.has_address():
+                raise CeleryAddressError()
+            
             return self.__send.apply_async(
-                args = (self.__auth.get_credentials(), emails), serializer = 'pickle'
-            )
+                args = (self.__auth.get_credentials(), emails),
+                serializer = 'pickle'
+                )
 
         if asynch == 2:
 
@@ -110,3 +105,15 @@ class Mail:
         return self.__send.run(
             self.__auth.get_credentials(), emails
         )
+
+    def send_mail(self, recipients_addr: Iterable[str], message: str, asynch: int = 0) -> None:
+
+        if not self.__auth.is_authenticated():
+            raise UnauthenticatedError()
+        
+        if asynch not in (1, 2):
+            raise ValueError("Asynch arg must be 1 (for celery) or 2 (for threading)! ")
+
+        emails = tuple(map(lambda args: Email(*args), zip(recipients_addr, repeat(message, len(recipients_addr)))))
+
+        return self.__evaluate_method(asynch = asynch, emails = emails)

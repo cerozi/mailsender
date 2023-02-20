@@ -13,8 +13,8 @@ from app.core.components.connection.comands import (AUTH_CMD, DATA_CMD, FROM_CMD
                                                RCPT_CMD)
 from app.core.components.connection.socket import MailClientSocket
 from app.core.components.mail.models.email import Email
-from app.core.exceptions.exceptions import (DataException, MailException,
-                                       RecipientException, SenderException)
+from app.core.exceptions.exceptions import (DataError, MailError,
+                                       RecipientError, SenderError)
 
 
 class MailConnection:
@@ -101,7 +101,7 @@ class MailConnection:
             sinalizando que a requisição será o
             corpo da mensagem do e-mail. Caso o
             servidor não responda o comando DATA
-            com sucesso, a exceção DataException()
+            com sucesso, a exceção DataError()
             é levantada.
 
                 Args:
@@ -143,17 +143,17 @@ class MailConnection:
         # especifica o remetente
         code, _ = self.__mailfrom(self.__username)
         if code != 250:
-            return email.set_error(SenderException(self.__username))
+            return email.set_error(SenderError(self.__username))
 
         # especifica o recipiente
         code, _ = self.__mailrecipient(email.recipient)
         if code != 250:
-            return email.set_error(RecipientException(email.recipient))
+            return email.set_error(RecipientError(email.recipient))
 
         # especifica a mensagem 
         code, _ = self.__maildata(email.message)
         if code != 250:
-            return email.set_error(MailException())
+            return email.set_error(MailError())
 
         return email.set_sent()
 

@@ -4,7 +4,7 @@
 """
 
 
-class ConnectionException(Exception):
+class ConnectionError(Exception):
 
     """
         Quando a conexão com o servidor
@@ -16,7 +16,7 @@ class ConnectionException(Exception):
         return super().__init__(message)
 
 
-class HeloException(Exception):
+class HeloError(Exception):
 
     """
         Após a conexão, o servidor espera
@@ -33,7 +33,7 @@ class HeloException(Exception):
         super().__init__(message)
 
 
-class SenderException(Exception):
+class SenderError(Exception):
 
     """
         Quando o servidor recusa o e-mail
@@ -45,7 +45,7 @@ class SenderException(Exception):
         super().__init__(message)
 
 
-class RecipientException(Exception):
+class RecipientError(Exception):
 
     """
         Quando o servidor recusa o e-mail
@@ -57,7 +57,7 @@ class RecipientException(Exception):
         super().__init__(message)
 
 
-class MailException(Exception):
+class MailError(Exception):
 
     """
         Quando o servidor recusa o conteúdo
@@ -69,7 +69,7 @@ class MailException(Exception):
         super().__init__(message)
 
 
-class DataException(Exception):
+class DataError(Exception):
 
     """
         Antes de enviar o corpo do e-mail,
@@ -86,7 +86,7 @@ class DataException(Exception):
         super().__init__(message)
 
 
-class UnauthenticatedException(Exception):
+class UnauthenticatedError(Exception):
 
     """
         Quando a função send_mail() da classe
@@ -99,3 +99,12 @@ class UnauthenticatedException(Exception):
         validate_credentials() and make sure that
         you are authenticated. """
         super().__init__(message)
+
+
+class CeleryAddressError(Exception):
+
+    def __init__(self) -> None:
+        message = """Before callyng asynch via celery,
+        set your celery address through 'set_addr()'.
+        """
+        return super().__init__(message)
